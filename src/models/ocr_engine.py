@@ -29,6 +29,7 @@ def check_tesseract():
 class OcrWorker(QObject):
     progress = pyqtSignal(int, str)
     page_ready = pyqtSignal(int, bytes)
+    page_error = pyqtSignal(int, str)
     finished = pyqtSignal()
     error = pyqtSignal(str)
 
@@ -43,25 +44,25 @@ class OcrWorker(QObject):
 
     def run(self):
         total = len(self.image_paths)
-        try:
-            for i, path in enumerate(self.image_paths):
-                if self._cancelled:
-                    break
+        for i, path in enumerate(self.image_paths):
+            if self._cancelled:
+                break
 
-                name = os.path.basename(path)
-                self.progress.emit(
-                    int((i / total) * 100),
-                    f"Procesando {i + 1}/{total}: {name}"
-                )
+            name = os.path.basename(path)
+            self.progress.emit(
+                int((i / total) * 100),
+                f"Procesando {i + 1}/{total}: {name}"
+            )
 
+            try:
                 pdf_bytes = self._process_image(path)
                 self.page_ready.emit(i, pdf_bytes)
+            except Exception as e:
+                self.page_error.emit(i, f"{name}: {e}")
 
-            if not self._cancelled:
-                self.progress.emit(100, "Generando PDF final...")
-            self.finished.emit()
-        except Exception as e:
-            self.error.emit(str(e))
+        if not self._cancelled:
+            self.progress.emit(100, "Generando PDF final...")
+        self.finished.emit()
 
     def _process_image(self, path):
         img = Image.open(path)
@@ -91,6 +92,7 @@ class OcrEngine:
 
         self._worker.progress.connect(callbacks["progress"])
         self._worker.page_ready.connect(callbacks["page_ready"])
+        self._worker.page_error.connect(callbacks.get("page_error", lambda *_: None))
         self._worker.finished.connect(callbacks["finished"])
         self._worker.error.connect(callbacks["error"])
         self._worker.finished.connect(self._cleanup)

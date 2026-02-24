@@ -8,6 +8,7 @@ class AppController:
         self.view = view
         self.ocr = OcrEngine()
         self.pdf = PdfBuilder()
+        self._errors = []
         self._connect_signals()
         self._check_tesseract()
 
@@ -22,13 +23,22 @@ class AppController:
                 "Tesseract OCR no detectado. Instalalo para poder convertir."
             )
             self.view.status_label.setStyleSheet("color: #e74c3c; font-size: 12px;")
+            return False
+        self.view.status_label.setText("")
+        self.view.status_label.setStyleSheet("")
+        return True
 
     def _on_images_changed(self, paths):
         has_images = len(paths) > 0
         has_tesseract = self.ocr.is_available()
         self.view.btn_convert.setEnabled(has_images and has_tesseract)
+        if has_images and not has_tesseract:
+            self._check_tesseract()
 
     def _start_conversion(self):
+        if not self._check_tesseract():
+            return
+
         paths = self.view.image_list.get_image_paths()
         if not paths:
             return
@@ -40,6 +50,7 @@ class AppController:
             return
 
         self._output_path = output_path
+        self._errors = []
         self.pdf.clear()
         language = self.view.get_selected_language()
 
@@ -49,6 +60,7 @@ class AppController:
         self.ocr.start_processing(paths, language, {
             "progress": self._on_progress,
             "page_ready": self._on_page_ready,
+            "page_error": self._on_page_error,
             "finished": self._on_finished,
             "error": self._on_error,
         })
@@ -65,22 +77,31 @@ class AppController:
     def _on_page_ready(self, index, pdf_bytes):
         self.pdf.add_page(index, pdf_bytes)
 
+    def _on_page_error(self, index, message):
+        self._errors.append(message)
+
     def _on_finished(self):
         count = self.pdf.page_count
         if count == 0:
             self.view.set_converting(False)
             self.view.set_progress(0, "")
+            if self._errors:
+                QMessageBox.warning(
+                    self.view, "Sin resultados",
+                    "No se pudo procesar ninguna imagen.\n\n" +
+                    "\n".join(self._errors[:10])
+                )
             return
 
         try:
             self.pdf.build(self._output_path)
             self.view.set_converting(False)
             self.view.set_progress(0, "")
-            QMessageBox.information(
-                self.view, "Listo",
-                f"PDF generado con {count} paginas.\n"
-                f"Guardado en: {self._output_path}"
-            )
+
+            msg = f"PDF generado con {count} paginas.\nGuardado en: {self._output_path}"
+            if self._errors:
+                msg += f"\n\n{len(self._errors)} imagenes no se pudieron procesar."
+            QMessageBox.information(self.view, "Listo", msg)
         except Exception as e:
             self._on_error(f"Error al guardar PDF: {e}")
 
