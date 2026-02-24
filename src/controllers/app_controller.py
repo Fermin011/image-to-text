@@ -43,6 +43,11 @@ class AppController:
         if not paths:
             return
 
+        language = self.view.get_selected_language()
+        if not language:
+            QMessageBox.warning(self.view, "Idioma", "Selecciona al menos un idioma.")
+            return
+
         output_path, _ = QFileDialog.getSaveFileName(
             self.view, "Guardar PDF", "output.pdf", "PDF (*.pdf)"
         )
@@ -52,7 +57,6 @@ class AppController:
         self._output_path = output_path
         self._errors = []
         self.pdf.clear()
-        language = self.view.get_selected_language()
 
         self.view.set_converting(True)
         self.view.set_progress(0, "Iniciando procesamiento...")
