@@ -1,19 +1,10 @@
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-    QLabel, QPushButton, QProgressBar, QComboBox
+    QLabel, QPushButton, QProgressBar, QCheckBox
 )
 from PyQt6.QtCore import Qt
 from src.views.styles import STYLESHEET
 from src.views.image_list import ImageListWidget
-
-
-OCR_LANGUAGES = {
-    "Espanol": "spa",
-    "Ingles": "eng",
-    "Espanol + Ingles": "spa+eng",
-    "Portugues": "por",
-    "Frances": "fra",
-}
 
 
 class MainWindow(QMainWindow):
@@ -62,13 +53,14 @@ class MainWindow(QMainWindow):
         lang_label = QLabel("Idioma OCR:")
         lang_label.setStyleSheet("font-size: 13px;")
 
-        self.lang_combo = QComboBox()
-        for name in OCR_LANGUAGES:
-            self.lang_combo.addItem(name, OCR_LANGUAGES[name])
-        self.lang_combo.setFixedWidth(180)
+        self.chk_spa = QCheckBox("Espanol")
+        self.chk_spa.setChecked(True)
+        self.chk_eng = QCheckBox("Ingles")
+        self.chk_eng.setChecked(True)
 
         controls.addWidget(lang_label)
-        controls.addWidget(self.lang_combo)
+        controls.addWidget(self.chk_spa)
+        controls.addWidget(self.chk_eng)
         controls.addStretch()
 
         self.btn_convert = QPushButton("Convertir a PDF")
@@ -101,7 +93,12 @@ class MainWindow(QMainWindow):
         self.main_layout.addLayout(progress_layout)
 
     def get_selected_language(self):
-        return self.lang_combo.currentData()
+        langs = []
+        if self.chk_spa.isChecked():
+            langs.append("spa")
+        if self.chk_eng.isChecked():
+            langs.append("eng")
+        return "+".join(langs) if langs else ""
 
     def set_progress(self, value, text=""):
         self.progress_bar.setVisible(value > 0)
@@ -112,6 +109,7 @@ class MainWindow(QMainWindow):
         self.btn_convert.setEnabled(not active)
         self.btn_cancel.setVisible(active)
         self.image_list.setEnabled(not active)
-        self.lang_combo.setEnabled(not active)
+        self.chk_spa.setEnabled(not active)
+        self.chk_eng.setEnabled(not active)
         if not active:
             self.progress_bar.setVisible(False)

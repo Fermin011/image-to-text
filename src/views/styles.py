@@ -187,4 +187,31 @@ QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
 QScrollBar:horizontal {
     height: 0;
 }
+
+QCheckBox {
+    color: #e8e0f0;
+    spacing: 6px;
+    font-size: 13px;
+}
+
+QCheckBox::indicator {
+    width: 16px;
+    height: 16px;
+    border: 2px solid #3d2a5c;
+    border-radius: 4px;
+    background-color: #2d1b4e;
+}
+
+QCheckBox::indicator:hover {
+    border-color: #f5c518;
+}
+
+QCheckBox::indicator:checked {
+    background-color: #f5c518;
+    border-color: #f5c518;
+}
+
+QCheckBox:disabled {
+    color: #9b8fb0;
+}
 """
