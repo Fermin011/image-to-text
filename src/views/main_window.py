@@ -3,6 +3,7 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt
 from src.views.styles import STYLESHEET
+from src.views.image_list import ImageListWidget
 
 
 class MainWindow(QMainWindow):
@@ -21,6 +22,7 @@ class MainWindow(QMainWindow):
         self.main_layout.setSpacing(16)
 
         self._build_header()
+        self._build_image_section()
 
     def _build_header(self):
         header = QVBoxLayout()
@@ -36,3 +38,7 @@ class MainWindow(QMainWindow):
         header.addWidget(self.title_label)
         header.addWidget(self.subtitle_label)
         self.main_layout.addLayout(header)
+
+    def _build_image_section(self):
+        self.image_list = ImageListWidget()
+        self.main_layout.addWidget(self.image_list, stretch=1)
