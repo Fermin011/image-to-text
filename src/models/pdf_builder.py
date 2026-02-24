@@ -1,0 +1,2 @@
+class PdfBuilder:
+    pass

@@ -1,0 +1,2 @@
+class OcrEngine:
+    pass
